@@ -3,6 +3,7 @@ namespace TechnicalAssessmentSH.Order;
 public class MedicalEquipmentOrder()
 {
     public string OrderId = "";
+    public List<Item>? Items;
 
     public class Item()
     {

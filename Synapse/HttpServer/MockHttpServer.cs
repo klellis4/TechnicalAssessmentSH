@@ -1,3 +1,5 @@
+using System.Text.Json;
+using TechnicalAssessmentSH.Order;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
@@ -24,8 +26,13 @@ public class MockHttpServer
     {
         // This defines a mock API response that responds to an incoming HTTP GET
         // to the `/orders` endpoint with a response with HTTP status code 200,
-        // a Content-Type header with value `text/plain` and a response body
-        // containing the text `Hello, world!`
+        // a Content-Type header with value `application/json` and a response body
+        // containing the json array of orders`
+        string json = "";
+        using (StreamReader r = new("Orders.json"))
+        {
+            json = r.ReadToEnd();
+        }
         server.Given(
             Request.Create().WithPath("/orders").UsingGet()
         )
@@ -33,21 +40,21 @@ public class MockHttpServer
             Response.Create()
                 .WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json")
-                .WithBody(
-                    "[" +
-                        "{" +
-                            "\"OrderId\" : \"1\"," +
-                            "\"OrderFirstName\" : \"Jack\"," +
-                            "\"OrderLastName\" : \"Shephard\"," +
-                            "\"Items\": " +
-                            "[" +
-                                "{" +
-                                    "\"Status\" : \"Sent\"," +
-                                    "\"DeliveryNotification\" : \"0\"" +
-                                "}" +
-                            "]" +
-                        "}" +
-                    "]"
+                .WithBody(json
+                // "[" +
+                //     "{" +
+                //         "\"OrderId\" : \"1\"," +
+                //         "\"OrderFirstName\" : \"Jack\"," +
+                //         "\"OrderLastName\" : \"Shephard\"," +
+                //         "\"Items\": " +
+                //         "[" +
+                //             "{" +
+                //                 "\"Status\" : \"Sent\"," +
+                //                 "\"DeliveryNotification\" : \"0\"" +
+                //             "}" +
+                //         "]" +
+                //     "}" +
+                // "]"
                 )
         );
     }

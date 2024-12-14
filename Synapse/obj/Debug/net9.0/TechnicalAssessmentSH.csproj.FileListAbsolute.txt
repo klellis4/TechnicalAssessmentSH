@@ -162,3 +162,4 @@
 /Users/kellyellis/Desktop/TechnicalAssessmentSH/Synapse/bin/Debug/net9.0/tr/Microsoft.CodeAnalysis.CSharp.resources.dll
 /Users/kellyellis/Desktop/TechnicalAssessmentSH/Synapse/bin/Debug/net9.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.resources.dll
 /Users/kellyellis/Desktop/TechnicalAssessmentSH/Synapse/bin/Debug/net9.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.resources.dll
+/Users/kellyellis/Desktop/TechnicalAssessmentSH/Synapse/obj/Debug/net9.0/TechnicalAssessmentSH.sourcelink.json
