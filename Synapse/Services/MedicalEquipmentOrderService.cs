@@ -1,95 +1,145 @@
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using TechnicalAssessmentSH.Models;
 
 namespace TechnicalAssessmentSH.Services;
 
-public class MedicalEquipmentOrderService
+public class MedicalEquipmentOrderService(ILogger<MedicalEquipmentOrderService> logger)
 {
+    // In a real life production scenario, this url would be configurable for
+    // different environments in something like helm
     const string apiBaseUrl = "http://localhost:9876";
+    public readonly ILogger logger = logger;
 
-    public static async Task<JObject[]> FetchMedicalEquipmentOrders()
+    /// <summary>
+    /// Gets a list of orders from the API, processes the orders, and then updates them
+    /// </summary>
+    public async Task HandleOrderProcessing()
+    {
+        var medicalEquipmentOrders = await FetchMedicalEquipmentOrders();
+
+        if (medicalEquipmentOrders == null)
+        {
+            this.logger.LogError("No orders data was found.");
+        }
+        else
+        {
+            foreach (var order in medicalEquipmentOrders)
+            {
+                var updatedOrder = ProcessOrder(order);
+                await UpdateOrder(updatedOrder);
+            }
+        }
+
+        this.logger.LogInformation("Results sent to relevant APIs.");
+    }
+
+    /// <summary>
+    /// Fetches the list of medical equipment orders from the api (json file)
+    /// and parses them into a list of MedicalEquipmentOrder objects
+    /// </summary>
+    public async Task<List<MedicalEquipmentOrder>?> FetchMedicalEquipmentOrders()
     {
         using HttpClient httpClient = new();
+
         var response = await httpClient.GetAsync(apiBaseUrl + "/orders");
+
         if (response.IsSuccessStatusCode)
         {
             var ordersData = await response.Content.ReadAsStringAsync();
 
-            return JArray.Parse(ordersData).ToObject<JObject[]>();
+            if (ordersData == null)
+            {
+                this.logger.LogError("No orders data was found.");
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<List<MedicalEquipmentOrder>>(ordersData);
         }
         else
         {
-            Console.WriteLine("Failed to fetch orders from API.");
+            this.logger.LogError("Failed to fetch orders from API.");
             return [];
         }
     }
 
-    public static JObject ProcessOrder(JObject order)
+    /// <summary>
+    /// Checks if the order is in a delivered state,
+    /// If yes then send a delivery alert and increment deliveryNotification
+    /// </summary>
+    /// <param name="order">The item in the order that was delivered</param>
+
+    public MedicalEquipmentOrder ProcessOrder(MedicalEquipmentOrder order)
     {
-        var items = order["Items"].ToObject<JArray>();
-        foreach (var item in items)
+        if (order.Items == null)
         {
-            if (IsItemDelivered(item))
+            this.logger.LogError("Order {OrderId} contains no items.", order.OrderId);
+        }
+        else
+        {
+            foreach (var item in order.Items)
             {
-                SendAlertMessage(item, order["OrderId"].ToString());
-                IncrementDeliveryNotification(item);
+                if (IsItemDelivered(item))
+                {
+                    SendAlertMessage(item, order.OrderId);
+                    item.DeliveryNotification++;
+                }
             }
         }
 
         return order;
     }
 
-    private static bool IsItemDelivered(JToken item)
+    private static bool IsItemDelivered(MedicalEquipmentOrder.Item item)
     {
-        return item["Status"].ToString().Equals("Delivered", StringComparison.OrdinalIgnoreCase);
+        return item.Status.ToString().Equals("Delivered", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    /// Delivery alert
+    /// Sends a delivery alert to the /alerts endpoint of the API
+    /// with the order's information
     /// </summary>
+    /// <param name="item">The item in the order that was delivered</param>
     /// <param name="orderId">The order id for the alert</param>
-    static void SendAlertMessage(JToken item, string orderId)
+    private void SendAlertMessage(MedicalEquipmentOrder.Item item, string orderId)
     {
-        using (HttpClient httpClient = new HttpClient())
+        using HttpClient httpClient = new();
+        var alertData = new
         {
-            var alertData = new
-            {
-                Message = $"Alert for delivered item: Order {orderId}, Item: {item["Description"]}, " +
-                            $"Delivery Notifications: {item["DeliveryNotification"]}"
-            };
-            var content = new StringContent(JObject.FromObject(alertData).ToString(), System.Text.Encoding.UTF8, "application/json");
-            var response = httpClient.PostAsync(apiBaseUrl + "/alerts", content).Result;
+            Message = $"Alert for delivered item: Order {orderId}, Item: {item.Description}, " +
+                        $"Delivery Notifications: {item.DeliveryNotification}"
+        };
+        var content = new StringContent(JObject.FromObject(alertData).ToString(), System.Text.Encoding.UTF8, "application/json");
+        var response = httpClient.PostAsync(apiBaseUrl + "/alerts", content).Result;
 
-            if (response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Alert sent for delivered item: {item["Description"]}");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to send alert for delivered item: {item["Description"]}");
-            }
+        if (response.IsSuccessStatusCode)
+        {
+            this.logger.LogInformation("Alert sent for delivered item: {description}", item.Description);
+        }
+        else
+        {
+            this.logger.LogError("Failed to send alert for delivered item: {description}", item.Description);
         }
     }
 
-    static void IncrementDeliveryNotification(JToken item)
+    /// <summary>
+    /// Sends the updated order to the /update endpoint of the API
+    /// </summary>
+    /// <param name="order">The updated order object</param>
+    public async Task UpdateOrder(MedicalEquipmentOrder order)
     {
-        item["DeliveryNotification"] = item["DeliveryNotification"].Value<int>() + 1;
-    }
+        using HttpClient httpClient = new();
+        var content = new StringContent(order.ToString(), System.Text.Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(apiBaseUrl + "/update", content);
 
-    public static async Task SendAlertAndUpdateOrder(JObject order)
-    {
-        using (HttpClient httpClient = new HttpClient())
+        if (response.IsSuccessStatusCode)
         {
-            var content = new StringContent(order.ToString(), System.Text.Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(apiBaseUrl + "/update", content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Updated order sent for processing: OrderId {order["OrderId"]}");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to send updated order for processing: OrderId {order["OrderId"]}");
-            }
+            this.logger.LogInformation("Updated order sent for processing: OrderId {OrderId}", order.OrderId);
+        }
+        else
+        {
+            this.logger.LogError("Failed to send updated order for processing: OrderId {OrderId}", order.OrderId);
         }
     }
 }

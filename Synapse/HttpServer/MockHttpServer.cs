@@ -1,11 +1,12 @@
-using System.Text.Json;
-using TechnicalAssessmentSH.Order;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
 namespace TechnicalAssessmentSH.HttpServer;
 
+/// <summary>
+/// This class acts as a local HTTP server to mock API calls/returns
+/// </summary>
 public class MockHttpServer
 {
     private WireMockServer server;
@@ -14,6 +15,8 @@ public class MockHttpServer
     {
         this.StartServer();
         this.CreateGetOrdersStub();
+        this.CreatePostUpdateStub();
+        this.CreatePostAlertsStub();
     }
 
     public void StartServer()
@@ -27,7 +30,7 @@ public class MockHttpServer
         // This defines a mock API response that responds to an incoming HTTP GET
         // to the `/orders` endpoint with a response with HTTP status code 200,
         // a Content-Type header with value `application/json` and a response body
-        // containing the json array of orders`
+        // containing the json array of orders read from orders.json
         string json = "";
         using (StreamReader r = new("Orders.json"))
         {
@@ -40,22 +43,37 @@ public class MockHttpServer
             Response.Create()
                 .WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json")
-                .WithBody(json
-                // "[" +
-                //     "{" +
-                //         "\"OrderId\" : \"1\"," +
-                //         "\"OrderFirstName\" : \"Jack\"," +
-                //         "\"OrderLastName\" : \"Shephard\"," +
-                //         "\"Items\": " +
-                //         "[" +
-                //             "{" +
-                //                 "\"Status\" : \"Sent\"," +
-                //                 "\"DeliveryNotification\" : \"0\"" +
-                //             "}" +
-                //         "]" +
-                //     "}" +
-                // "]"
-                )
+                .WithBody(json)
+        );
+    }
+
+    private void CreatePostUpdateStub()
+    {
+        // This defines a mock API response that responds to an incoming HTTP POST
+        // to the `/update` endpoint with a response with HTTP status code 200
+        // and a Content-Type header with value `text/plain`
+        server.Given(
+            Request.Create().WithPath("/update").UsingPost()
+        )
+        .RespondWith(
+            Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "text/plain")
+        );
+    }
+
+    private void CreatePostAlertsStub()
+    {
+        // This defines a mock API response that responds to an incoming HTTP POST
+        // to the `/alerts` endpoint with a response with HTTP status code 200
+        // and a Content-Type header with value `text/plain`
+        server.Given(
+            Request.Create().WithPath("/alerts").UsingPost()
+        )
+        .RespondWith(
+            Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "text/plain")
         );
     }
 

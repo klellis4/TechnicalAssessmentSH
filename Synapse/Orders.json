@@ -3,17 +3,35 @@
         "OrderId": "1",
         "OrderFirstName": "Jack",
         "OrderLastName": "Shephard",
+        "Total": 493.37,
         "Items":
         [
             {
                 "Description": "Medline Comfortable Folding Wheelchair with Swing-Back Desk-Length Arms and Swing-Away Footrests, 18”W x 16X”D Seat",
                 "Status": "Shipped",
-                "DeliveryNotification" : "0"
+                "DeliveryNotification" : 0,
+                "Price": 399.99
             },
             {
                 "Description": "Drive shower tub chair with back",
                 "Status": "Ordered",
-                "DeliveryNotification": "0"
+                "DeliveryNotification": 0,
+                "Price": 93.38
+            }
+        ]
+    },
+    {
+        "OrderId": "2",
+        "OrderFirstName": "James",
+        "OrderLastName": "Ford",
+        "Total": 19.95,
+        "Items":
+        [
+            {
+                "Description": "Medline Suction Cup Pivot Grab Bar, 19",
+                "Status": "Delivered",
+                "DeliveryNotification" : 0,
+                "Price": 19.95
             }
         ]
     }
