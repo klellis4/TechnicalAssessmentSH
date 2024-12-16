@@ -16,6 +16,24 @@
                 "kind": "test",
                 "isDefault": true
             }
+        },
+        {
+            "label": "generate coverage report",
+            "type": "process",
+            "command": "reportgenerator",
+            "args": [
+                "-reports:lcov.opencover.xml",
+                "-targetdir:coverage-report",
+                "-reporttypes:Html",
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            },
+            "dependsOn": [
+                "dotnet test with coverage"
+            ]
         }
     ]
 }
