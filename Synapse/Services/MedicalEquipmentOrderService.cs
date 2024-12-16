@@ -5,12 +5,13 @@ using TechnicalAssessmentSH.Models;
 
 namespace TechnicalAssessmentSH.Services;
 
-public class MedicalEquipmentOrderService(ILogger<MedicalEquipmentOrderService> logger)
+public class MedicalEquipmentOrderService(ILogger<MedicalEquipmentOrderService> logger, HttpClient httpClient)
 {
     // In a real life production scenario, this url would be configurable for
     // different environments in something like helm
     const string apiBaseUrl = "http://localhost:9876";
     public readonly ILogger logger = logger;
+    public readonly HttpClient httpClient = httpClient;
 
     /// <summary>
     /// Gets a list of orders from the API, processes the orders, and then updates them
@@ -41,8 +42,6 @@ public class MedicalEquipmentOrderService(ILogger<MedicalEquipmentOrderService> 
     /// </summary>
     public async Task<List<MedicalEquipmentOrder>?> FetchMedicalEquipmentOrders()
     {
-        using HttpClient httpClient = new();
-
         var response = await httpClient.GetAsync(apiBaseUrl + "/orders");
 
         if (response.IsSuccessStatusCode)
@@ -104,7 +103,6 @@ public class MedicalEquipmentOrderService(ILogger<MedicalEquipmentOrderService> 
     /// <param name="orderId">The order id for the alert</param>
     private void SendAlertMessage(MedicalEquipmentOrder.Item item, string orderId)
     {
-        using HttpClient httpClient = new();
         var alertData = new
         {
             Message = $"Alert for delivered item: Order {orderId}, Item: {item.Description}, " +
@@ -129,7 +127,6 @@ public class MedicalEquipmentOrderService(ILogger<MedicalEquipmentOrderService> 
     /// <param name="order">The updated order object</param>
     public async Task UpdateOrder(MedicalEquipmentOrder order)
     {
-        using HttpClient httpClient = new();
         var content = new StringContent(order.ToString(), System.Text.Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(apiBaseUrl + "/update", content);
 

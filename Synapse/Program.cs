@@ -4,7 +4,8 @@ using TechnicalAssessmentSH.Services;
 
 namespace TechnicalAssessmentSH
 {
-    class Program(MedicalEquipmentOrderService medicalEquipmentOrderService, ILogger<MedicalEquipmentOrderService> logger)
+    class Program(MedicalEquipmentOrderService medicalEquipmentOrderService
+        , ILogger<MedicalEquipmentOrderService> logger)
     {
         public readonly MedicalEquipmentOrderService medicalEquipmentOrderService = medicalEquipmentOrderService;
         public readonly ILogger<MedicalEquipmentOrderService> logger = logger;
@@ -21,7 +22,7 @@ namespace TechnicalAssessmentSH
                 .SetMinimumLevel(LogLevel.Trace)
                 .AddConsole());
             ILogger<MedicalEquipmentOrderService> logger = loggerFactory.CreateLogger<MedicalEquipmentOrderService>();
-            MedicalEquipmentOrderService medicalEquipmentOrderService = new(logger);
+            MedicalEquipmentOrderService medicalEquipmentOrderService = new(logger, new HttpClient());
 
             logger.LogInformation("Start of App");
 
